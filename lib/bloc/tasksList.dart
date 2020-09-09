@@ -14,12 +14,15 @@ class TasksBloc {
 
   Future addTask(TaskModel newTask) async {
     print("add");
+    await DB.query().then((value) => newTask.id = value.length);
     await DB.insert(newTask);
-    List<TaskModel> res = _tasks != null ?_tasks : List<TaskModel>();
+    List<TaskModel> res = _tasks != null ? _tasks : List<TaskModel>();
     res.add(newTask);
+    updateList();
     onListUpd.add(res);
   }
-  Future updateTask( TaskModel newTask) async {
+
+  Future updateTask(TaskModel newTask) async {
     print("update");
     print(newTask);
     await DB.update(newTask);
@@ -27,27 +30,36 @@ class TasksBloc {
     this.loadFromDB();
     onListUpd.add(res);
   }
-  Future updateList() async {
 
+  Future updateList() async {
     loadFromDB();
   }
+
   Future removeAt(item) async {
     print("remove");
     print(item);
     await DB.delete(item);
+    _tasks = [];
     List<Map<String, dynamic>> _results = await DB.query();
 
-    List<TaskModel> res = _results.map((item) {print(item); return TaskModel.fromJson(item);}).toList();
+    List<TaskModel> res = _results.map((item) {
+      print(item);
+      return TaskModel.fromJson(item);
+    }).toList();
 
     onListUpd.add(res);
   }
 
   Future loadFromDB() async {
     print("loading");
+    _tasks = [];
     List<Map<String, dynamic>> _results = await DB.query();
 
-    List<TaskModel> res = _results.map((item) {print(item); return TaskModel.fromJson(item);}).toList();
-
+    List<TaskModel> res = _results.map((item) {
+      print(item);
+      return TaskModel.fromJson(item);
+    }).toList();
+    print(res);
     onListUpd.add(res);
   }
 }

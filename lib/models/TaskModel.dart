@@ -19,13 +19,17 @@ class TaskModel {
       return false;
   }
 
-  double get progress {
-    List<double> completedArray;
-    this.steps.forEach((e) {
-      completedArray.add(e.isCompleted ? 1 : 0);
-    });
-    return completedArray.reduce((a, b) => a + b) / completedArray.length;
-  }
+  // double get progress {
+  //   if (this.steps != null) {
+  //     List<double> completedArray;
+  //     this.steps.forEach((e) {
+  //       completedArray.add(e.isCompleted ? 1 : 0);
+  //     });
+  //     return completedArray.reduce((a, b) => a + b) / completedArray.length;
+  //   }
+  //   else
+  //    return 0;
+  // }
 
   TaskModel({
     this.id,

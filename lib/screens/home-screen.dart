@@ -1,3 +1,4 @@
+import 'package:flutter_sfsymbols/flutter_sfsymbols.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -20,146 +21,255 @@ class HomeScreen extends StatelessWidget {
     print(_taskList.tasks);
 
     _taskList.updateList();
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          buildAppBar(context,(){_taskList.loadFromDB();}),
-          StreamBuilder(
-            stream: _taskList.onListUpd,
-            builder: (BuildContext context, AsyncSnapshot<List<TaskModel>> snapshot) {
-              Widget child;
-              if (snapshot.hasData) {
-                if (snapshot.data.length > 0) {
-                  child = SliverFixedExtentList(
-                    itemExtent: 75.0,
-                    delegate: SliverChildBuilderDelegate(
-                          (BuildContext context, int index) {
-                        final item = snapshot.data[index];
-                        return SizedBox(height: 75, child: StreamBuilder<Object>(
-                          stream: _taskList.onListUpd,
-                          builder: (context, snapshot) {
-                            return TaskCell(
-                                item: item);
-                          }
-                        ));
-                      },
-                      childCount: snapshot.data.length,
-                    ),
-                  );
-                }
-                else{
-                  child = SliverFixedExtentList(
-                      itemExtent: MediaQuery.of(context).size.height,
-                      delegate: SliverChildListDelegate(
-                        [
-                          Center(
-                            child: Text(
-                              "No tagets found 😕",
-                              style: Theme
-                                  .of(context)
-                                  .textTheme
-                                  .headline4
-                                  .apply(color: Theme
-                                  .of(context)
-                                  .primaryColorDark),
-                            ),
+    return Platform.isIOS
+        ? CupertinoPageScaffold(
+            child: CustomScrollView(
+              slivers: [
+                buildAppBar(context, () {
+                  showAddingAlert(context);
+                }),
+                StreamBuilder(
+                  stream: _taskList.onListUpd,
+                  builder: (BuildContext context,
+                      AsyncSnapshot<List<TaskModel>> snapshot) {
+                    Widget child;
+                    if (snapshot.hasData) {
+                      if (snapshot.data.length > 0) {
+                        child = SliverFixedExtentList(
+                          itemExtent: 80.0,
+                          delegate: SliverChildBuilderDelegate(
+                            (BuildContext context, int index) {
+                              final item = snapshot.data[index];
+                              return SizedBox(
+                                  height: 75,
+                                  child: StreamBuilder<Object>(
+                                      stream: _taskList.onListUpd,
+                                      builder: (context, snapshot) {
+                                        return TaskCell(item: item);
+                                      }));
+                            },
+                            childCount: snapshot.data.length,
                           ),
-                        ],
-                      )
-                  );
-                }
-              } else if (snapshot.hasError) {
-                child = SliverFixedExtentList(
-                    itemExtent: MediaQuery.of(context).size.height,
-                    delegate: SliverChildListDelegate([
-                      Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            Icon(
-                              Icons.error_outline,
-                              color: Colors.red,
-                              size: 60,
+                        );
+                      } else {
+                        child = SliverFixedExtentList(
+                            itemExtent: MediaQuery.of(context).size.height,
+                            delegate: SliverChildListDelegate(
+                              [
+                                Center(
+                                  child: Text(
+                                    "No tagets found 😕",
+                                    style: !Platform.isIOS
+                                        ? Theme.of(context)
+                                            .textTheme
+                                            .headline4
+                                            .apply(
+                                                color: Theme.of(context)
+                                                    .primaryColorDark)
+                                        : null,
+                                  ),
+                                ),
+                              ],
+                            ));
+                      }
+                    } else if (snapshot.hasError) {
+                      child = SliverFixedExtentList(
+                          itemExtent: MediaQuery.of(context).size.height,
+                          delegate: SliverChildListDelegate([
+                            Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Colors.red,
+                                    size: 60,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 16),
+                                    child: Text('Error: ${snapshot.error}'),
+                                  )
+                                ])
+                          ]));
+                    } else {
+                      child = SliverFixedExtentList(
+                        itemExtent: MediaQuery.of(context).size.height,
+                        delegate: SliverChildListDelegate(
+                          [
+                            Center(
+                              child: Text(
+                                "No tagets found 😕",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headline4
+                                    .apply(
+                                        color:
+                                            Theme.of(context).primaryColorDark),
+                              ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(top: 16),
-                              child: Text('Error: ${snapshot.error}'),
-                            )
-                          ])
-                    ]));
-              } else {
-                child = SliverFixedExtentList(
-                  itemExtent: MediaQuery.of(context).size.height,
-                  delegate: SliverChildListDelegate(
-                    [
-                      Center(
-                        child: Text(
-                          "No tagets found 😕",
-                          style: Theme
-                              .of(context)
-                              .textTheme
-                              .headline4
-                              .apply(color: Theme
-                              .of(context)
-                              .primaryColorDark),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              return child;
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            showAddingBottomSheet(context);
-          },
-          label: Text("✍️ Add new")),
-    );
+                      );
+                    }
+                    return child;
+                  },
+                ),
+              ],
+            ),
+          )
+        : Scaffold(
+      backgroundColor: Theme.of(context).backgroundColor,
+            body: CustomScrollView(
+              slivers: [
+                buildAppBar(context, () {
+                  _taskList.loadFromDB();
+                }),
+                StreamBuilder(
+                  stream: _taskList.onListUpd,
+                  builder: (BuildContext context,
+                      AsyncSnapshot<List<TaskModel>> snapshot) {
+                    Widget child;
+                    if (snapshot.hasData) {
+                      if (snapshot.data.length > 0) {
+                        child = SliverFixedExtentList(
+                          itemExtent: 80.0,
+                          delegate: SliverChildBuilderDelegate(
+                            (BuildContext context, int index) {
+                              final item = snapshot.data[index];
+                              return SizedBox(
+                                  height: 75,
+                                  child: StreamBuilder<Object>(
+                                      stream: _taskList.onListUpd,
+                                      builder: (context, snapshot) {
+                                        return TaskCell(item: item);
+                                      }));
+                            },
+                            childCount: snapshot.data.length,
+                          ),
+                        );
+                      } else {
+                        child = SliverFixedExtentList(
+                            itemExtent: MediaQuery.of(context).size.height,
+                            delegate: SliverChildListDelegate(
+                              [
+                                Center(
+                                  child: Text(
+                                    "No tagets found 😕",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headline4
+                                        .apply(
+                                            color: Theme.of(context)
+                                                .primaryColorDark),
+                                  ),
+                                ),
+                              ],
+                            ));
+                      }
+                    } else if (snapshot.hasError) {
+                      child = SliverFixedExtentList(
+                          itemExtent: MediaQuery.of(context).size.height,
+                          delegate: SliverChildListDelegate([
+                            Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Colors.red,
+                                    size: 60,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 16),
+                                    child: Text('Error: ${snapshot.error}'),
+                                  )
+                                ])
+                          ]));
+                    } else {
+                      child = SliverFixedExtentList(
+                        itemExtent: MediaQuery.of(context).size.height,
+                        delegate: SliverChildListDelegate(
+                          [
+                            Center(
+                              child: Text(
+                                "No tagets found 😕",
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headline4
+                                    .apply(
+                                        color:
+                                            Theme.of(context).primaryColorDark),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return child;
+                  },
+                ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton.extended(
+                onPressed: () {
+                  showAddingAlert(context);
+                },
+                label: Text("✍️ Add new")),
+          );
   }
 
-  showAddingBottomSheet(BuildContext context) {
+  showAddingAlert(BuildContext context) {
     final _taskList = Provider.of<TasksBloc>(context, listen: false);
-    String newName = "";
-    if (Theme.of(context).platform == TargetPlatform.iOS) {
+
+    ValueNotifier<String> newName = ValueNotifier("");
+    if (Platform.isIOS) {
       print("cupertino");
 
-      showDialog<String>(
+      showCupertinoDialog<String>(
         context: context,
+
         builder: (context) {
           return CupertinoAlertDialog(
             insetAnimationCurve: Curves.easeInOut,
 
-            title: Text('Adding new target',style: TextStyle(fontFamily: "SF"),),
-            actions: <Widget>[
-              new CupertinoDialogAction(
-                  child: const Text('cancel'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  }),
-              new CupertinoDialogAction(
-                  child: const Text('add'),
-                  onPressed: () {
-                    _taskList.addTask(new TaskModel(
-                        id: _taskList.tasks != null ? _taskList.tasks.length + 1 : 0, title: newName));
-                    Navigator.pop(context);
-                  })
-            ],
+            title: Text(
+              'Adding new target',
+              style: TextStyle(fontFamily: "SF"),
+            ),
             content: Column(
               children: <Widget>[
                 SizedBox(
                   height: 15,
                 ),
                 CupertinoTextField(
+                  style: TextStyle(fontSize: 15),
                   onChanged: (value) {
-                    newName = value;
+                    newName.value = value;
                   },
                   placeholder: "Enter taget's name",
                 )
               ],
             ),
+            actions: <Widget>[
+              new CupertinoDialogAction(
+                  child: const Text('cancel'),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  }),
+          ValueListenableBuilder(
+          valueListenable: newName,
+          builder: (BuildContext context, value, Widget child)=>new CupertinoDialogAction(
+              child: const Text('add'),
+              onPressed: newName.value.length > 0
+                  ? () {
+                _taskList.addTask(new TaskModel(
+                    id: _taskList.tasks != null
+                        ? _taskList.tasks.length + 1
+                        : 0,
+                    title: newName.value));
+                Navigator.pop(context);
+              }
+                  : null))
+
+            ],
           );
         },
       );
@@ -173,29 +283,48 @@ class HomeScreen extends StatelessWidget {
               content: new Row(
                 children: <Widget>[
                   new Expanded(
-                    child: new TextField(
-                      autofocus: true,
-                      onChanged: (val)=>newName=val,
-                      decoration: new InputDecoration(
-                          labelText: 'Adding new target',
-                          hintText: 'Enter target\'s name'),
+                    child: Column(
+                        mainAxisSize:MainAxisSize.min,
+                      children: [
+                        Text('Adding new target',style:Theme.of(context).textTheme.headline4.apply(fontSizeDelta: -5, color: Theme.of(context).primaryColorDark)),
+                        new TextField(
+
+                          autofocus: true,
+                          onChanged: (val) => newName.value = val,
+                          decoration: new InputDecoration(
+
+                            //labelStyle:
+                              hintStyle: TextStyle(
+                                  color: Theme.of(context).hintColor),
+
+
+                              hintText: 'Enter target\'s name'),
+                        ),
+                      ],
                     ),
                   )
                 ],
               ),
               actions: <Widget>[
                 new FlatButton(
-                    child: const Text('CANCEL'),
+                    child: const Text('Cancel'),
                     onPressed: () {
                       Navigator.pop(context);
                     }),
-                new FlatButton(
-                    child: const Text('OPEN'),
-                    onPressed: () {
-                      _taskList.addTask(new TaskModel(
-                          id: _taskList.tasks.length + 1, title: newName));
+                ValueListenableBuilder(
+                    valueListenable: newName,
+                    builder: (BuildContext context, value, Widget child) {
+                      return new FlatButton(
+                          child: const Text('Add'),
+                          onPressed: newName.value.length > 0
+                              ? () {
+                                  _taskList.addTask(new TaskModel(
+                                      id: _taskList.tasks.length + 1,
+                                      title: newName.value));
 
-                      Navigator.pop(context);
+                                  Navigator.pop(context);
+                                }
+                              : null);
                     })
               ],
             );
@@ -203,7 +332,7 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  buildAppBar(context,onTap) => Platform.isIOS
+  buildAppBar(context, onTap) => Platform.isIOS
       ? CupertinoSliverNavigationBar(
           largeTitle: Text(
             'Targets🎯',
@@ -212,21 +341,40 @@ class HomeScreen extends StatelessWidget {
           // automaticallyImplyTitle: false,
           // automaticallyImplyLeading: true,
 
-          trailing:
-              CupertinoButton(
-                onPressed: onTap,
-                child: Icon(Icons.refresh),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  showAddingAlert(context);
+                },
+                child: Icon(
+                  SFSymbols.square_pencil,
+                  color: Platform.isIOS
+                      ? CupertinoTheme.of(context).primaryColor
+                      : Theme.of(context).primaryColorDark,
+                  size: 22,
+                ),
               ),
 
+              // CupertinoButton(
+              //   onPressed: onTap,
+              //   child: Icon(SFSymbols.ellipsis),
+              // ),
+            ],
+          ),
         )
       : SliverAppBar(
+          centerTitle: true,
           expandedHeight: 150.0,
+          backgroundColor: Theme.of(context).backgroundColor,
           floating: true,
           pinned: true,
           flexibleSpace: FlexibleSpaceBar(
             title: Text(
-              'Targets',
+              'Targets🎯',
               textAlign: TextAlign.left,
+              style: Theme.of(context).textTheme.headline1.apply(color: Theme.of(context).primaryColorDark),
             ),
           ),
           actions: <Widget>[
@@ -235,15 +383,11 @@ class HomeScreen extends StatelessWidget {
                   Icons.create,
                   size: 20,
                 ),
-                onPressed: () {},
+                onPressed: () =>
+                  showAddingAlert(context)
+                ,
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.more_horiz,
-                  size: 20,
-                ),
-                onPressed: () {},
-              ),
+
             ]);
 }
 
@@ -253,11 +397,12 @@ class TaskCell extends StatelessWidget {
     @required this.item,
   }) : super(key: key);
 
-  final TaskModel  item;
+  final TaskModel item;
 
   @override
   Widget build(BuildContext context) {
     final _taskList = Provider.of<TasksBloc>(context, listen: false);
+
     return Dismissible(
       key: Key(item.id.toString()),
       onDismissed: (_) {
@@ -265,36 +410,80 @@ class TaskCell extends StatelessWidget {
       },
       direction: DismissDirection.endToStart,
       background: Container(
-          color: Theme.of(context).errorColor,
-          margin: EdgeInsets.only(bottom: 5)),
-      child: InkWell(
-        onTap: () => Navigator.of(context).pushNamed(TargetDetailsScreen.routeName,arguments: item),
+        color: Theme.of(context).errorColor,
+        child: Row(
+          children: [
+            Spacer(),
+            Icon(CupertinoIcons.delete),
+            SizedBox(
+              width: 15,
+            ),
+          ],
+        ),
+      ),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context)
+            .pushNamed(TargetDetailsScreen.routeName, arguments: item),
         child: Container(
-          height: 75,
-          margin: EdgeInsets.only(bottom: 5),
-          alignment: Alignment.center,
-          color: Colors.white,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.max,
+          color: Platform.isIOS
+              ? CupertinoTheme.of(context).scaffoldBackgroundColor
+              : Theme.of(context).primaryColor,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                width: 15,
+              Container(
+                height: 75,
+                margin: EdgeInsets.only(bottom: 5),
+                alignment: Alignment.center,
+
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    SizedBox(
+                      width: 15,
+                    ),
+                    StreamBuilder<Object>(
+                        stream: _taskList.onListUpd,
+                        builder: (context, snapshot) {
+                          return SizedBox(
+                            width: 25,
+                            child: item.isCompleted
+                                ? Icon(SFSymbols.checkmark_alt,color: Platform.isIOS ?CupertinoTheme.of(context).primaryColor: Theme.of(context).primaryColorDark,)
+                                : null,
+                          );
+                        }),
+                    Spacer(),
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                          fontFamily: "SF-Rounded",
+                          fontWeight: FontWeight.w500,
+                          color: Platform.isIOS ?CupertinoTheme.of(context).primaryColor: Theme.of(context).primaryColorDark,
+                          fontSize: 20),
+                    ),
+                    Spacer(),
+                    Text(
+                      "${item.completed}/${item.steps.length}",
+                      style: TextStyle(
+                          fontFamily: "SF-Rounded",
+                          fontWeight: FontWeight.w400,
+                          color: Platform.isIOS ?CupertinoTheme.of(context).primaryColor: Theme.of(context).primaryColorDark,
+                          fontSize: 20),
+                    ),
+                    SizedBox(
+                      width: 15,
+                    ),
+                    Icon(CupertinoIcons.forward),
+                    SizedBox(
+                      width: 15,
+                    ),
+                  ],
+                ),
               ),
-              StreamBuilder<Object>(
-                stream: _taskList.onListUpd,
-                builder: (context, snapshot) {
-                  return SizedBox(
-                    width: 25,
-                    child: item.isCompleted ? Icon(Icons.check) : null,
-                  );
-                }
-              ),
-              Spacer(),
-              Text(item.title),
-              Spacer(),
-              SizedBox(
-                width: 40,
+              Divider(
+                height: 0,
+                color:Colors.black
               ),
             ],
           ),
